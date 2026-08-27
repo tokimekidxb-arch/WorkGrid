@@ -162,7 +162,7 @@ export function WorkflowEditor({ definition, onChange }: WorkflowEditorProps) {
         <button onClick={relayout} style={{ padding: "6px 12px", fontSize: "11px", borderRadius: "6px", border: "1px solid #dfe5eb", background: "white" }}>Auto Layout</button>
         <span style={{ fontSize: "10px", color: "#87939f", alignSelf: "center", marginLeft: "auto" }}>Drag to connect nodes. Select and press Backspace to delete.</span>
       </div>
-      <div style={{ flex: 1, position: "relative" }}>
+      <div style={{ width: "100%", height: "440px", position: "relative" }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
