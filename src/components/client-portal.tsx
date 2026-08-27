@@ -22,6 +22,16 @@ const headings: Record<ClientView, [string, string]> = {
   overview: ["TEST LTD workspace", "Education workflows, staff access, and client-owned storage."],
   staff: ["Staff", "Assign real people to the five available role seats."],
   forms: ["Forms", "Input forms remain separate and connect to workflow starting points."],
+
+const clientNav: Array<{ id: ClientView; label: string; icon: LucideIcon }> = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard }, { id: "staff", label: "Staff", icon: Users },
+  { id: "forms", label: "Forms", icon: FormInput }, { id: "workflows", label: "Workflows", icon: Workflow },
+  { id: "records", label: "Records", icon: Database }, { id: "reports", label: "Reports", icon: FileText },
+];
+const headings: Record<ClientView, [string, string]> = {
+  overview: ["TEST LTD workspace", "Education workflows, staff access, and client-owned storage."],
+  staff: ["Staff", "Assign real people to the five available role seats."],
+  forms: ["Forms", "Input forms remain separate and connect to workflow starting points."],
   workflows: ["Workflows", "Five General workflows configured for the Basic plan."],
   records: ["Records", "Workflow records map to the client-owned operational Google Sheet."],
   reports: ["Reports", "Final PDFs will be generated when workflow runs close."],
@@ -30,10 +40,10 @@ const headings: Record<ClientView, [string, string]> = {
 };
 const staffRows = [
   ["Workspace owner", "woon.hoongseong.influvis@gmail.com", "Owner", "Active"],
-  ["Education manager", "Invite a staff member", "Manager", "Available"],
-  ["Finance approver", "Invite a staff member", "Approver", "Available"],
-  ["Workflow administrator", "Invite a staff member", "Administrator", "Available"],
-  ["Staff requester", "Invite a staff member", "Requester", "Available"],
+  ["Education manager", "manager.testltd@workgrid.app", "Manager", "Active"],
+  ["Finance approver", "finance.testltd@workgrid.app", "Approver", "Active"],
+  ["Workflow administrator", "admin.testltd@workgrid.app", "Administrator", "Active"],
+  ["Staff requester", "staff.testltd@workgrid.app", "Requester", "Active"],
 ];
 const workflowRows = [
   ["Leave request", "General template", "3 stages", "Active", "1 test run"],
