@@ -16,6 +16,12 @@ import {
 import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
 import { Check, FileInput, FileText, FolderOpen, GitBranch, ShieldCheck, UserCog } from "lucide-react";
+import {
+  purchaseApprovalNodes,
+  purchaseApprovalEdges,
+  inventoryPurchaseNodes,
+  inventoryPurchaseEdges,
+} from "./workflow-templates";
 
 // --- Custom Node Components ---
 
@@ -107,26 +113,15 @@ interface WorkflowEditorProps {
 }
 
 export function WorkflowEditor({ definition, onChange }: WorkflowEditorProps) {
-  // Convert definition to nodes and edges (simplified conversion for the visual editor)
-  const initialNodes: Node[] = [
-    { id: "1", type: "source", position: { x: 0, y: 0 }, data: { label: "INPUT SOURCE", title: "Purchase request form", description: "Submitted by: Requester role" } },
-    { id: "2", type: "action", position: { x: 0, y: 0 }, data: { label: "APPROVER ROLE", title: "Department manager", description: "Can approve or reject" } },
-    { id: "3", type: "decision", position: { x: 0, y: 0 }, data: { label: "ROUTING CONDITION", title: "Amount above AED 5,000?", description: "Yes → Finance · No → Complete" } },
-    { id: "4", type: "action", position: { x: 0, y: 0 }, data: { label: "APPROVER ROLE", title: "Finance approver", description: "Can approve, reject, return" } },
-    { id: "5", type: "output", position: { x: 0, y: 0 }, data: { label: "WORKFLOW STATUS", title: "Approved", description: "Lock final form values" } },
-    { id: "6", type: "output", position: { x: 0, y: 0 }, data: { label: "GOOGLE DRIVE", title: "Save attachments", description: "Client-selected folder" } },
-    { id: "7", type: "output", position: { x: 0, y: 0 }, data: { label: "FINAL OUTPUT", title: "Generate close PDF", description: "Save PDF and approval history" } },
-  ];
+  const templateName = definition ? definition[0] : "Purchase approval";
 
-  const initialEdges: Edge[] = [
-    { id: "e1-2", source: "1", target: "2", animated: true },
-    { id: "e2-3", source: "2", target: "3", animated: true },
-    { id: "e3-4", source: "3", sourceHandle: "yes", target: "4", animated: true, label: "YES" },
-    { id: "e3-5", source: "3", sourceHandle: "no", target: "5", animated: true, label: "NO" },
-    { id: "e4-6", source: "4", target: "6", animated: true },
-    { id: "e5-6", source: "5", target: "6", animated: true },
-    { id: "e6-7", source: "6", target: "7", animated: true },
-  ];
+  let initialNodes: Node[] = purchaseApprovalNodes;
+  let initialEdges: Edge[] = purchaseApprovalEdges;
+
+  if (templateName === "Purchase with inventory update") {
+    initialNodes = inventoryPurchaseNodes;
+    initialEdges = inventoryPurchaseEdges;
+  }
 
   const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(initialNodes, initialEdges);
 

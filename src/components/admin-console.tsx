@@ -24,6 +24,7 @@ type TemplateItem = readonly [name: string, category: string, industry: string, 
 
 const workflowTemplates: TemplateItem[] = [
   ["Purchase approval", "Finance", "General", 3], ["Expense reimbursement", "Finance", "General", 4], ["Payment approval", "Finance", "General", 3], ["Petty cash request", "Finance", "General", 3],
+  ["Purchase with inventory update", "Finance", "General", 19],
   ["Leave request", "People", "General", 3], ["Employee onboarding", "People", "General", 5], ["Document approval", "Operations", "General", 3], ["Asset request", "Operations", "General", 3],
   ["Incident report", "Operations", "General", 4], ["Travel request", "Finance", "General", 4], ["IT support request", "Operations", "General", 3], ["Contract approval", "Operations", "General", 5],
   ["Material request", "Site operations", "Construction", 4], ["Site inspection", "Quality", "Construction", 4], ["Variation order", "Commercial", "Construction", 5], ["Subcontractor approval", "Procurement", "Construction", 4],
