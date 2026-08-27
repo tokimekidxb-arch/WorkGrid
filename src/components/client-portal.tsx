@@ -39,11 +39,12 @@ const headings: Record<ClientView, [string, string]> = {
   settings: ["Company settings", "Manage the TEST LTD Education workspace."],
 };
 const staffRows = [
-  ["Workspace owner", "woon.hoongseong.influvis@gmail.com", "Owner", "Active"],
-  ["Education manager", "manager.testltd@workgrid.app", "Manager", "Active"],
-  ["Finance approver", "finance.testltd@workgrid.app", "Approver", "Active"],
-  ["Workflow administrator", "admin.testltd@workgrid.app", "Administrator", "Active"],
-  ["Staff requester", "staff.testltd@workgrid.app", "Requester", "Active"],
+  ["Owner", "woon.hoongseong.influvis@gmail.com", "Owner", "Active"],
+  ["Admin", "admin.testltd@workgrid.app", "Administrator", "Active"],
+  ["HR", "hr.testltd@workgrid.app", "Manager", "Active"],
+  ["Manager", "manager.testltd@workgrid.app", "Manager", "Active"],
+  ["Tech Staff", "tech.testltd@workgrid.app", "Approver", "Active"],
+  ["Ordinary Staff", "staff.testltd@workgrid.app", "Requester", "Active"],
 ];
 const workflowRows = [
   ["Leave request", "General template", "3 stages", "Active", "1 test run"],
