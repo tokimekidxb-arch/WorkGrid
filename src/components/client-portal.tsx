@@ -18,16 +18,7 @@ const clientNav: Array<{ id: ClientView; label: string; icon: LucideIcon }> = [
   { id: "forms", label: "Forms", icon: FormInput }, { id: "workflows", label: "Workflows", icon: Workflow },
   { id: "records", label: "Records", icon: Database }, { id: "reports", label: "Reports", icon: FileText },
 ];
-const headings: Record<ClientView, [string, string]> = {
-  overview: ["TEST LTD workspace", "Education workflows, staff access, and client-owned storage."],
-  staff: ["Staff", "Assign real people to the five available role seats."],
-  forms: ["Forms", "Input forms remain separate and connect to workflow starting points."],
 
-const clientNav: Array<{ id: ClientView; label: string; icon: LucideIcon }> = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard }, { id: "staff", label: "Staff", icon: Users },
-  { id: "forms", label: "Forms", icon: FormInput }, { id: "workflows", label: "Workflows", icon: Workflow },
-  { id: "records", label: "Records", icon: Database }, { id: "reports", label: "Reports", icon: FileText },
-];
 const headings: Record<ClientView, [string, string]> = {
   overview: ["TEST LTD workspace", "Education workflows, staff access, and client-owned storage."],
   staff: ["Staff", "Assign real people to the five available role seats."],
