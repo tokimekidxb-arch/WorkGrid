@@ -15,7 +15,18 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import dagre from "dagre";
-import { Check, FileInput, FileText, FolderOpen, GitBranch, ShieldCheck, UserCog } from "lucide-react";
+import {
+  Zap,
+  TextCursorInput,
+  ClipboardList,
+  ShieldCheck,
+  GitBranch,
+  Search,
+  DatabaseBackup,
+  FileText,
+  Bell,
+  CheckCircle,
+} from "lucide-react";
 
 // --- Custom Node Components ---
 
@@ -35,15 +46,28 @@ function BaseNode({ data, type, icon: Icon, children }: any) {
   );
 }
 
-export function SourceNode({ data }: any) {
-  return <BaseNode data={data} type="source" icon={FileInput} />;
+// 1. Start / Trigger (Purple)
+export function TriggerNode({ data }: any) {
+  return <BaseNode data={data} type="source" icon={Zap} />;
 }
 
-export function ActionNode({ data }: any) {
-  return <BaseNode data={data} type="action" icon={data.title?.includes("Finance") ? ShieldCheck : UserCog} />;
+// 2. Form / Input (Purple)
+export function FormNode({ data }: any) {
+  return <BaseNode data={data} type="source" icon={TextCursorInput} />;
 }
 
-export function DecisionNode({ data }: any) {
+// 3. Task (Blue)
+export function TaskNode({ data }: any) {
+  return <BaseNode data={data} type="action" icon={ClipboardList} />;
+}
+
+// 4. Approval (Blue)
+export function ApprovalNode({ data }: any) {
+  return <BaseNode data={data} type="action" icon={ShieldCheck} />;
+}
+
+// 5. Condition (Orange - already has Yes/No handles)
+export function ConditionNode({ data }: any) {
   return (
     <BaseNode data={data} type="decision" icon={GitBranch}>
       <Handle type="source" position={Position.Bottom} id="yes" style={{ ...handleStyle, left: "30%", background: "#2e9265" }} />
@@ -52,16 +76,42 @@ export function DecisionNode({ data }: any) {
   );
 }
 
-export function OutputNode({ data }: any) {
-  const Icon = data.title?.includes("Drive") ? FolderOpen : data.title?.includes("PDF") ? FileText : Check;
-  return <BaseNode data={data} type="output" icon={Icon} />;
+// 6. Data Read (Green)
+export function DataReadNode({ data }: any) {
+  return <BaseNode data={data} type="output" icon={Search} />;
+}
+
+// 7. Data Write (Green)
+export function DataWriteNode({ data }: any) {
+  return <BaseNode data={data} type="output" icon={DatabaseBackup} />;
+}
+
+// 8. File / Document (Green)
+export function FileNode({ data }: any) {
+  return <BaseNode data={data} type="output" icon={FileText} />;
+}
+
+// 9. Notification (Green)
+export function NotificationNode({ data }: any) {
+  return <BaseNode data={data} type="output" icon={Bell} />;
+}
+
+// 10. End / Close (Green)
+export function EndNode({ data }: any) {
+  return <BaseNode data={data} type="output" icon={CheckCircle} />;
 }
 
 const nodeTypes = {
-  source: SourceNode,
-  action: ActionNode,
-  decision: DecisionNode,
-  output: OutputNode,
+  trigger: TriggerNode,
+  form: FormNode,
+  task: TaskNode,
+  approval: ApprovalNode,
+  condition: ConditionNode,
+  dataRead: DataReadNode,
+  dataWrite: DataWriteNode,
+  file: FileNode,
+  notification: NotificationNode,
+  end: EndNode,
 };
 
 // --- Layout Engine ---
@@ -104,7 +154,7 @@ function getLayoutedElements(nodes: Node[], edges: Edge[], direction = "TB") {
 export function WorkflowEditor({ definition, onChange }: any) {
   // Start with a clean canvas containing just one input node
   const initialNodes: Node[] = [
-    { id: "1", type: "source", position: { x: 50, y: 50 }, data: { label: "INPUT SOURCE", title: "Trigger Event", description: "Start of workflow" } },
+    { id: "1", type: "trigger", position: { x: 50, y: 50 }, data: { label: "START / TRIGGER", title: "Trigger Event", description: "Start of workflow" } },
   ];
   const initialEdges: Edge[] = [];
 
@@ -116,9 +166,9 @@ export function WorkflowEditor({ definition, onChange }: any) {
   const addStage = () => {
     const newNode: Node = {
       id: Date.now().toString(),
-      type: "action",
+      type: "task",
       position: { x: 100, y: 100 },
-      data: { label: "APPROVER ROLE", title: "New Stage", description: "Review request" },
+      data: { label: "TASK", title: "New Task", description: "Do something" },
     };
     setNodes((ns) => [...ns, newNode]);
   };
@@ -189,10 +239,16 @@ export function WorkflowEditor({ definition, onChange }: any) {
                 onChange={(e) => updateSelectedNode("type", e.target.value)}
                 style={{ padding: "6px", borderRadius: "4px", border: "1px solid #dfe5eb", fontSize: "12px" }}
               >
-                <option value="source">Input Source</option>
-                <option value="action">Action / Approval</option>
-                <option value="decision">Condition</option>
-                <option value="output">Output</option>
+                <option value="trigger">Start / Trigger</option>
+                <option value="form">Form / Input</option>
+                <option value="task">Task</option>
+                <option value="approval">Approval</option>
+                <option value="condition">Condition</option>
+                <option value="dataRead">Data Read</option>
+                <option value="dataWrite">Data Write</option>
+                <option value="file">File / Document</option>
+                <option value="notification">Notification</option>
+                <option value="end">End / Close</option>
               </select>
             </label>
 
