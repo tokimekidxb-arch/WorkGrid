@@ -127,8 +127,9 @@ function TemplatesView({ notify }: { notify: (m: string) => void }) {
     void supabase.from("workflow_templates").select("name,category,industry_keys,definition").order("created_at", { ascending: false }).then(({ data }) => {
       if (!data) return;
       const builtInNames = new Set(workflowTemplates.map((item) => item[0]));
+      const oldBuggyNames = new Set(["purchase approvel", "Incident report", "Travel request", "IT support request", "Contract approval", "Stock reorder"]);
       const labels: Record<string, string> = { general: "General", construction: "Construction", trading_distribution: "Trading & Distribution", retail: "Retail", manufacturing: "Manufacturing", professional_services: "Professional Services", healthcare: "Healthcare", hospitality: "Hospitality", logistics: "Logistics", real_estate: "Real Estate", education: "Education", other: "Other" };
-      setCustomTemplates(data.filter((row) => !builtInNames.has(row.name)).map((row) => [row.name, row.category, labels[row.industry_keys?.[0] ?? "general"] ?? "General", Array.isArray(row.definition?.stages) ? row.definition.stages.length : 3] as TemplateItem));
+      setCustomTemplates(data.filter((row) => !builtInNames.has(row.name) && !oldBuggyNames.has(row.name)).map((row) => [row.name, row.category, labels[row.industry_keys?.[0] ?? "general"] ?? "General", Array.isArray(row.definition?.stages) ? row.definition.stages.length : 3] as TemplateItem));
     });
   }, []);
   const industries = ["All industries", ...Array.from(new Set(workflowTemplates.map((item) => item[2])))];
