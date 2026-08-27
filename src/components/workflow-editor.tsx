@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ReactFlow,
   useNodesState,
@@ -152,14 +152,19 @@ function getLayoutedElements(nodes: Node[], edges: Edge[], direction = "TB") {
 // --- Main Editor Component ---
 
 export function WorkflowEditor({ definition, onChange }: any) {
-  // Start with a clean canvas containing just one input node
-  const initialNodes: Node[] = [
+  const initialNodes: Node[] = definition?.nodes || [
     { id: "1", type: "trigger", position: { x: 50, y: 50 }, data: { label: "START / TRIGGER", title: "Trigger Event", description: "Start of workflow" } },
   ];
-  const initialEdges: Edge[] = [];
+  const initialEdges: Edge[] = definition?.edges || [];
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  useEffect(() => {
+    if (onChange) {
+      onChange(nodes, edges);
+    }
+  }, [nodes, edges]);
 
   const onConnect = useCallback((params: any) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)), [setEdges]);
 

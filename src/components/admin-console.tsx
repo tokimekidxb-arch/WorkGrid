@@ -7,7 +7,7 @@ import {
   ScrollText, Search, Settings, ShieldCheck, Sparkles, UserCog, Users, WandSparkles, Workflow, X,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { FormEvent } from "react";
 import { Brand } from "@/components/brand";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -20,7 +20,7 @@ const clients = [
   { id: "TLT", name: "TEST LTD", industry: "Education", workspace: "test-ltd", staff: 5, workflows: 5, aiWorkflows: 0, forms: 5, drive: "Folder linked", status: "Active", plan: "Basic", color: "blue" },
 ];
 
-type TemplateItem = readonly [name: string, category: string, industry: string, stages: number];
+type TemplateItem = readonly [name: string, category: string, industry: string, stages: number, template_key: string, definition?: any];
 
 const workflowTemplates: TemplateItem[] = [];
 
@@ -124,12 +124,12 @@ function TemplatesView({ notify }: { notify: (m: string) => void }) {
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
-    void supabase.from("workflow_templates").select("name,category,industry_keys,definition").order("created_at", { ascending: false }).then(({ data }) => {
+    void supabase.from("workflow_templates").select("name,category,industry_keys,definition,template_key").order("created_at", { ascending: false }).then(({ data }) => {
       if (!data) return;
       const builtInNames = new Set(workflowTemplates.map((item) => item[0]));
       const oldBuggyNames = new Set(["purchase approvel", "Incident report", "Travel request", "IT support request", "Contract approval", "Stock reorder"]);
       const labels: Record<string, string> = { general: "General", construction: "Construction", trading_distribution: "Trading & Distribution", retail: "Retail", manufacturing: "Manufacturing", professional_services: "Professional Services", healthcare: "Healthcare", hospitality: "Hospitality", logistics: "Logistics", real_estate: "Real Estate", education: "Education", other: "Other" };
-      setCustomTemplates(data.filter((row) => !builtInNames.has(row.name) && !oldBuggyNames.has(row.name)).map((row) => [row.name, row.category, labels[row.industry_keys?.[0] ?? "general"] ?? "General", Array.isArray(row.definition?.stages) ? row.definition.stages.length : 3] as TemplateItem));
+      setCustomTemplates(data.filter((row) => !builtInNames.has(row.name) && !oldBuggyNames.has(row.name)).map((row) => [row.name, row.category, labels[row.industry_keys?.[0] ?? "general"] ?? "General", Array.isArray(row.definition?.stages) ? row.definition.stages.length : 3, row.template_key, row.definition] as TemplateItem));
     });
   }, []);
   const industries = ["All industries", ...Array.from(new Set(workflowTemplates.map((item) => item[2])))];
@@ -157,19 +157,51 @@ function CreateTemplateModal({ onClose, onCreated }: { onClose: () => void; onCr
     const definition = { trigger: "form_submission", stages: Array.from({ length: stages }, (_, index) => ({ key: `stage_${index + 1}`, name: index === 0 ? "Request submitted" : index === stages - 1 ? "Completed" : `Approval stage ${index}`, order: index + 1 })), integrations: { google_drive: true, google_sheets: true }, completion: { generate_pdf: true } };
     const { error: insertError } = await supabase.from("workflow_templates").insert({ owner_scope: "system", template_key: templateKey, name, category, industry_keys: [industryKey], definition, version: 1, is_published: false, created_by: user.id });
     if (insertError) { setError(insertError.message); setSaving(false); return; }
-    onCreated([name, category, industry, stages]);
+    onCreated([name, category, industry, stages, templateKey, definition]);
   };
   return <div className="client-modal-backdrop" onMouseDown={onClose}><section className="client-modal create-template-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><p>WORKFLOW LIBRARY</p><h2>Create workflow template</h2></div><button aria-label="Close" onClick={onClose}><X size={18} /></button></header><p>Create the reusable structure now. Approvers, permissions, conditions, forms, and Google destinations can be configured after saving.</p><form onSubmit={submit}><label>Template name<input name="name" placeholder="Example: Equipment purchase approval" required autoFocus /></label><div className="modal-field-grid"><label>Industry<select name="industry" defaultValue="General"><option>General</option><option>Construction</option><option>Trading &amp; Distribution</option><option>Retail</option><option>Manufacturing</option><option>Professional Services</option><option>Healthcare</option><option>Hospitality</option><option>Logistics</option><option>Real Estate</option><option>Education</option><option>Other</option></select></label><label>Category<select name="category" defaultValue="Operations"><option>Operations</option><option>Finance</option><option>Procurement</option><option>People</option><option>Inventory</option><option>Quality</option><option>Maintenance</option><option>Logistics</option></select></label></div><label>Initial stages<select name="stages" defaultValue="3"><option value="2">2 stages</option><option value="3">3 stages</option><option value="4">4 stages</option><option value="5">5 stages</option><option value="6">6 stages</option></select></label>{error && <p className="modal-error">{error}</p>}<footer><button type="button" onClick={onClose}>Cancel</button><button className="solid-button" disabled={saving}>{saving ? "Saving…" : "Create template"}</button></footer></form></section></div>;
 }
 
 function TemplatePreview({ template, onClose, notify }: { template: TemplateItem; onClose: () => void; notify: (m: string) => void }) {
   const [configTab, setConfigTab] = useState<"diagram" | "approvers" | "permissions" | "outputs">("diagram");
+  const [isSaving, setIsSaving] = useState(false);
+  const currentNodesRef = useRef<any>(null);
+  const currentEdgesRef = useRef<any>(null);
+
+  const handleSave = async () => {
+    if (!template[4]) {
+      notify("Built-in templates cannot be edited directly.");
+      return;
+    }
+    setIsSaving(true);
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    
+    const newDefinition = {
+      ...(template[5] || {}),
+      nodes: currentNodesRef.current,
+      edges: currentEdgesRef.current
+    };
+    
+    const { error } = await supabase
+      .from("workflow_templates")
+      .update({ definition: newDefinition })
+      .eq("template_key", template[4]);
+      
+    setIsSaving(false);
+    if (error) {
+      notify(`Error saving: ${error.message}`);
+    } else {
+      notify(`${template[0]} configuration saved successfully!`);
+    }
+  };
+
   return <div className="client-modal-backdrop" onMouseDown={onClose}><section className="client-modal template-preview workflow-designer" onMouseDown={(event) => event.stopPropagation()}><header><div><p>WORKFLOW TEMPLATE CONFIGURATION</p><h2>{template[0]}</h2><span>{template[2]} · {template[1]} · Draft template</span></div><button aria-label="Close" onClick={onClose}><X size={18} /></button></header><nav className="designer-tabs">{(["diagram", "approvers", "permissions", "outputs"] as const).map((item) => <button className={configTab === item ? "active" : ""} key={item} onClick={() => setConfigTab(item)}>{item}</button>)}</nav>
-    {configTab === "diagram" && <div className="designer-body"><div className="flow-legend"><span><i className="source" /> Input</span><span><i className="action" /> Role action</span><span><i className="decision" /> Condition</span><span><i className="output" /> Output</span></div><WorkflowEditor definition={template} /></div>}
+    {configTab === "diagram" && <div className="designer-body"><div className="flow-legend"><span><i className="source" /> Input</span><span><i className="action" /> Role action</span><span><i className="decision" /> Condition</span><span><i className="output" /> Output</span></div><WorkflowEditor definition={template[5]} onChange={(nodes: any, edges: any) => { currentNodesRef.current = nodes; currentEdgesRef.current = edges; }} /></div>}
     {configTab === "approvers" && <div className="designer-config"><h3>Approval directions</h3><p>Configure roles only. The client chooses the real staff members after using the template.</p><div className="config-row"><span>1</span><div><strong>Department manager</strong><small>Receives every submitted request</small></div><select><option>Manager role</option><option>Workspace admin role</option><option>Specific role...</option></select></div><div className="config-row"><span>2</span><div><strong>Finance approver</strong><small>Receives requests above the amount condition</small></div><select><option>Finance role</option><option>Owner role</option><option>Specific role...</option></select></div><label>Approval amount condition<div className="condition-input"><select><option>Request amount</option></select><select><option>is greater than</option></select><input defaultValue="5,000" /><span>AED</span></div></label></div>}
     {configTab === "permissions" && <div className="designer-config"><h3>Permission configuration</h3><p>These permissions control what each role can do inside this workflow.</p><div className="permission-grid"><div><LockKeyhole size={18} /><strong>Requester role</strong><label><input type="checkbox" defaultChecked /> Create request</label><label><input type="checkbox" defaultChecked /> View own requests</label><label><input type="checkbox" /> View all requests</label><label><input type="checkbox" defaultChecked /> Edit while returned</label></div><div><LockKeyhole size={18} /><strong>Manager role</strong><label><input type="checkbox" defaultChecked /> View assigned requests</label><label><input type="checkbox" defaultChecked /> Approve or reject</label><label><input type="checkbox" defaultChecked /> Return for changes</label><label><input type="checkbox" /> Edit request values</label></div><div><LockKeyhole size={18} /><strong>Finance role</strong><label><input type="checkbox" defaultChecked /> View finance queue</label><label><input type="checkbox" defaultChecked /> Approve or reject</label><label><input type="checkbox" defaultChecked /> View attachments</label><label><input type="checkbox" defaultChecked /> View final PDF</label></div></div></div>}
     {configTab === "outputs" && <div className="designer-config"><h3>Storage and outputs</h3><p>The client connects the real Google account and selects the folders after assigning this template.</p><div className="output-config"><div><FolderOpen size={20} /><span><strong>Google Drive folder</strong><small>Pull attachments from and save files to the client-selected workflow folder.</small></span><button>Required</button></div><div><Blocks size={20} /><span><strong>Google Sheets record</strong><small>Append the configured workflow fields and status to a client-owned Sheet.</small></span><button>Enabled</button></div><div><FileText size={20} /><span><strong>Workflow close PDF</strong><small>Generate the form, approval directions, decisions, timestamps, and attachment list.</small></span><button>Enabled</button></div></div></div>}
-    <footer><span>Template configuration only · No client data</span><button onClick={onClose}>Close</button><button className="solid-button" onClick={() => notify(`${template[0]} configuration saved as a draft.`)}>Save configuration</button><button className="solid-button" onClick={() => { onClose(); notify(`${template[0]} is ready to assign to a client.`); }}>Use this template</button></footer></section></div>;
+    <footer><span>Template configuration only · No client data</span><button onClick={onClose}>Close</button><button className="solid-button" disabled={isSaving} onClick={handleSave}>{isSaving ? "Saving..." : "Save configuration"}</button><button className="solid-button" onClick={() => { onClose(); notify(`${template[0]} is ready to assign to a client.`); }}>Use this template</button></footer></section></div>;
 }
 
 function MainTeamView({ notify }: { notify: (m: string) => void }) {
