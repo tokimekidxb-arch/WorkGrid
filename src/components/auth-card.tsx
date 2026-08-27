@@ -24,6 +24,7 @@ export function AuthCard({ kind }: AuthCardProps) {
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
+    const workspace = String(form.get("workspace") ?? "").trim().toLowerCase();
     const supabase = createSupabaseBrowserClient();
     if (!supabase) { setMessage("Supabase is not configured."); setLoading(false); return; }
     if (signup) {
@@ -39,6 +40,9 @@ export function AuthCard({ kind }: AuthCardProps) {
       const user = (await supabase.auth.getUser()).data.user;
       const { data: access } = await supabase.from("platform_admins").select("role").eq("user_id", user?.id ?? "").eq("status", "active").maybeSingle();
       if (!access) { await supabase.auth.signOut(); setMessage("This account does not have main-account access."); setLoading(false); return; }
+    } else {
+      const { data: tenant, error: tenantError } = await supabase.from("tenants").select("id").eq("slug", workspace).maybeSingle();
+      if (tenantError || !tenant) { await supabase.auth.signOut(); setMessage("This account does not have access to that company workspace."); setLoading(false); return; }
     }
     router.push(admin ? "/admin" : "/client");
     router.refresh();
@@ -51,7 +55,7 @@ export function AuthCard({ kind }: AuthCardProps) {
       <h1>{admin ? "Main account login" : signup ? "Create your company account" : "Welcome back"}</h1>
       <p>{admin ? "For WorkGrid owners and platform administrators." : signup ? "Set up a secure workspace for your company." : "Sign in to your company’s WorkGrid workspace."}</p>
       <form onSubmit={submit} className="auth-form">
-        {!admin && <label>Company workspace<input name="workspace" placeholder="e.g. a-ltd" defaultValue={signup ? "" : "a-ltd"} required /></label>}
+        {!admin && <label>Company workspace<input name="workspace" placeholder="e.g. test-ltd" defaultValue={signup ? "" : "test-ltd"} required /></label>}
         {signup && <label>Company name<input name="company" placeholder="Your company name" required /></label>}
         <label>Work email<input name="email" type="email" placeholder={admin ? "tokimekidxb@gmail.com" : "you@company.com"} required /></label>
         <label>Password<input name="password" type="password" placeholder="At least 8 characters" minLength={8} required /></label>
